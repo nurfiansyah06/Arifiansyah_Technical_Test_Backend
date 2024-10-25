@@ -1,66 +1,132 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Technical Test: Lead Management System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Overview
 
-## About Laravel
+This project is designed to create a Lead Management System that accommodates different user roles and functionalities related to lead handling in a solar panel installation business. The system allows for the insertion and distribution of leads, status updates, and management of salesperson assignments and penalties.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Table of Contents
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+1. [Database Structure](#database-structure)
+2. [User Roles](#user-roles)
+3. [API Endpoints](#api-endpoints)
+4. [Features](#features)
+5. [Installation](#installation)
+6. [Usage](#usage)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Database Structure
 
-## Learning Laravel
+The database will include the following tables:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+1. **users**
+   - id (Primary Key)
+   - name
+   - email
+   - password
+   - role (Super Admin, Customer Service, Salesperson, Operational, Client)
+   - residential_type (boolean)
+   - commercial_type (boolean)
+   - created_at
+   - updated_at
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+2. **leads**
+   - id (Primary Key)
+   - title
+   - client_id (Foreign Key to users)
+   - salesperson_id (Foreign Key to users)
+   - status (enum: New, Follow Up, Survey Request, Survey Approved, Survey Rejected, Survey Completed, Final Proposal, Deal)
+   - notes (text)
+   - image_path (string)
+   - created_at
+   - updated_at
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+3. **penalties**
+   - id (Primary Key)
+   - salesperson_id (Foreign Key to users)
+   - start_time (datetime)
+   - end_time (datetime)
+   - is_exists (boolean)
+   - created_at
+   - updated_at
 
-## Laravel Sponsors
+4. **status_updates**
+   - id (Primary Key)
+   - lead_id (Foreign Key to leads)
+   - status (enum: New, Follow Up, Survey Request, Survey Approved, Survey Rejected, Survey Completed, Final Proposal, Deal)
+   - notes (text)
+   - image_path (string)
+   - created_at
+   - updated_at
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## User Roles
 
-### Premium Partners
+1. **Super Admin**: Full access to the system, including user management and reporting.
+2. **Customer Service**: Manage customer inquiries and lead assignments.
+3. **Salesperson**: Handle leads, update statuses, and manage client interactions.
+4. **Operational**: Approve or reject survey requests and handle operational tasks.
+5. **Client**: View their leads and interact with salespersons.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+## API Endpoints
 
-## Contributing
+### 1. Insert New Leads
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- **Endpoint**: `POST /api/leads`
+- **Description**: Insert a new lead and distribute it to a salesperson using Round Robin.
+- **Request Body**:
+    ```json
+    {
+        "title": "Lead Title",
+        "client_id": 1
+    }
+    ```
 
-## Code of Conduct
+### 2. Update Lead Status
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- **Endpoint**: `PUT /api/leads/{id}/status`
+- **Description**: Update the status of a lead.
+- **Request Body**:
+    ```json
+    {
+        "status": "Follow Up",
+        "notes": "Notes regarding the lead",
+        "image_path": "path/to/image.jpg"
+    }
+    ```
 
-## Security Vulnerabilities
+### 3. Transfer Lead Ownership
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- **Endpoint**: `PATCH /api/leads/{id}/transfer`
+- **Description**: Transfer the ownership of a lead to another salesperson.
+- **Request Body**:
+    ```json
+    {
+        "new_salesperson_id": 2
+    }
+    ```
 
-## License
+### 4. Apply Penalties to Salesperson
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- **Endpoint**: `POST /api/salespersons/{id}/penalties`
+- **Description**: Apply a penalty to a salesperson, preventing them from receiving new leads during a specified time.
+- **Request Body**:
+    ```json
+    {
+        "start_time": "2024-10-01T10:00:00",
+        "end_time": "2024-10-15T10:00:00"
+    }
+    ```
+
+## Features
+
+- Round Robin lead distribution among salespersons.
+- Multi-status updates for leads.
+- Ability to transfer lead ownership between salespersons.
+- Implementation of penalties for salespersons with start and end times.
+- Support for both Residential and Commercial sales types for each salesperson.
+
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/lead-management-system.git
+   cd lead-management-system
+    ```
